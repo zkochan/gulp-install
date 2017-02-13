@@ -5,7 +5,7 @@ const gutil = require('gulp-util')
 const path = require('path')
 const commandRunner = require('./lib/commandRunner')
 
-const cmdMap = {
+const CMD_MAP = {
   'tsd.json': {
     cmd: 'tsd',
     args: ['reinstall', '--save']
@@ -14,13 +14,24 @@ const cmdMap = {
     cmd: 'bower',
     args: ['install', '--config.interactive=false']
   },
-  'package.json': {
-    cmd: 'npm',
-    args: ['install']
-  },
   'requirements.txt': {
     cmd: 'pip',
     args: ['install', '-r', 'requirements.txt']
+  }
+}
+
+const npmInstallerMap = {
+  npm: {
+    cmd: 'npm',
+    args: ['install']
+  },
+  pnpm: {
+    cmd: 'pnpm',
+    args: ['install']
+  },
+  yarn: {
+    cmd: 'yarn',
+    args: []
   }
 }
 
@@ -30,6 +41,9 @@ module.exports = exports = function install (opts) {
   const limit = pLimit(concurrency)
   var toRun = []
   let count = 0
+  const cmdMap = Object.assign({}, CMD_MAP, {
+    'package.json': npmInstallerMap[opts.npmInstaller || 'npm']
+  })
 
   return through2({
     objectMode: true

@@ -162,6 +162,14 @@ gulp.src(__dirname + '/templates/**')
 
 Specify the number of commands being excecuted simultaneously.
 
+### options.npmInstaller
+
+**Type:** `'npm' | 'pnpm' | 'yarn'`
+
+**Default:** `npm`
+
+Specify the npm installer.
+
 ## License
 
 [MIT License](http://en.wikipedia.org/wiki/MIT_License)
