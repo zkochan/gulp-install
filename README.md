@@ -154,6 +154,13 @@ gulp.src(__dirname + '/templates/**')
     ));  
 ```
 
+### options.concurrency
+
+**Type:** `Number`
+
+**Default:** `1`
+
+Specify the number of commands being excecuted simultaneously.
 
 ## License
 

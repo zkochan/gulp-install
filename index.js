@@ -1,28 +1,33 @@
 'use strict';
-var through2 = require('through2'),
-  gutil = require('gulp-util'),
-  path = require('path'),
-  commandRunner = require('./lib/commandRunner'),
-  cmdMap = {
-    'tsd.json': {
-      cmd: 'tsd',
-      args: ['reinstall', '--save']
-    },
-    'bower.json': {
-      cmd: 'bower',
-      args: ['install', '--config.interactive=false']
-    },
-    'package.json': {
-      cmd: 'npm',
-      args: ['install']
-    },
-    'requirements.txt': {
-      cmd: 'pip',
-      args: ['install', '-r', 'requirements.txt']
-    }
-  };
+const pLimit = require('p-limit');
+const through2 = require('through2');
+const gutil = require('gulp-util');
+const path = require('path');
+const commandRunner = require('./lib/commandRunner');
+
+const cmdMap = {
+  'tsd.json': {
+    cmd: 'tsd',
+    args: ['reinstall', '--save']
+  },
+  'bower.json': {
+    cmd: 'bower',
+    args: ['install', '--config.interactive=false']
+  },
+  'package.json': {
+    cmd: 'npm',
+    args: ['install']
+  },
+  'requirements.txt': {
+    cmd: 'pip',
+    args: ['install', '-r', 'requirements.txt']
+  }
+};
 
 module.exports = exports = function install(opts) {
+  opts = opts || {}
+  const concurrency = opts.concurrency || 1
+  const limit = pLimit(concurrency)
   var toRun = [],
     count = 0;
 
@@ -69,7 +74,7 @@ module.exports = exports = function install(opts) {
         return cb();
       } else {
         toRun.forEach(function(command) {
-          commandRunner.run(command)
+          limit(() => commandRunner.run(command))
             .then(() => done(cb, toRun.length))
             .catch(err => {
               log(err.message, ', run `' + gutil.colors.yellow(formatCommand(command)) + '` manually');
