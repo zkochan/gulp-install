@@ -69,13 +69,12 @@ module.exports = exports = function install(opts) {
         return cb();
       } else {
         toRun.forEach(function(command) {
-          commandRunner.run(command, function(err) {
-            if (err) {
+          commandRunner.run(command)
+            .then(() => done(cb, toRun.length))
+            .catch(err => {
               log(err.message, ', run `' + gutil.colors.yellow(formatCommand(command)) + '` manually');
               return cb(err);
-            }
-            done(cb, toRun.length);
-          });
+            });
         });
       }
     }

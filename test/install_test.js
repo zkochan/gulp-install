@@ -496,10 +496,10 @@ describe('gulp-install', function () {
 });
 
 function mockRunner () {
-  var mock = function mock (cmd, cb) {
+  var mock = function mock (cmd) {
     mock.called += 1;
     mock.commands.push(cmd);
-    cb();
+    return Promise.resolve();
   };
   mock.called = 0;
   mock.commands = [];
