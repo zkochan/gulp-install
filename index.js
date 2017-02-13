@@ -1,9 +1,9 @@
-'use strict';
-const pLimit = require('p-limit');
-const through2 = require('through2');
-const gutil = require('gulp-util');
-const path = require('path');
-const commandRunner = require('./lib/commandRunner');
+'use strict'
+const pLimit = require('p-limit')
+const through2 = require('through2')
+const gutil = require('gulp-util')
+const path = require('path')
+const commandRunner = require('./lib/commandRunner')
 
 const cmdMap = {
   'tsd.json': {
@@ -22,131 +22,131 @@ const cmdMap = {
     cmd: 'pip',
     args: ['install', '-r', 'requirements.txt']
   }
-};
+}
 
-module.exports = exports = function install(opts) {
+module.exports = exports = function install (opts) {
   opts = opts || {}
   const concurrency = opts.concurrency || 1
   const limit = pLimit(concurrency)
-  var toRun = [],
-    count = 0;
+  var toRun = []
+  let count = 0
 
   return through2({
-      objectMode: true
-    },
-    function(file, enc, cb) {
+    objectMode: true
+  },
+    function (file, enc, cb) {
       if (!file.path) {
-        cb();
+        cb()
       }
-      var cmd = clone(cmdMap[path.basename(file.path)]);
+      var cmd = clone(cmdMap[path.basename(file.path)])
 
       if (cmd) {
         if (opts && opts.production) {
-          cmd.args.push('--production');
+          cmd.args.push('--production')
         }
         if (opts && opts.ignoreScripts) {
-          cmd.args.push('--ignore-scripts');
+          cmd.args.push('--ignore-scripts')
         }
         if (opts && opts.args) {
-          formatArguments(opts.args).forEach(function(arg) {
-            cmd.args.push(arg);
-          });
+          formatArguments(opts.args).forEach(function (arg) {
+            cmd.args.push(arg)
+          })
         }
         if (cmd.cmd === 'bower' && opts && opts.allowRoot) {
-          cmd.args.push('--allow-root');
+          cmd.args.push('--allow-root')
         }
         if (cmd.cmd === 'npm' && opts && opts.noOptional) {
-          cmd.args.push('--no-optional');
+          cmd.args.push('--no-optional')
         }
 
-        cmd.cwd = path.dirname(file.path);
-        toRun.push(cmd);
+        cmd.cwd = path.dirname(file.path)
+        toRun.push(cmd)
       }
-      this.push(file);
-      cb();
+      this.push(file)
+      cb()
     },
-    function(cb) {
+    function (cb) {
       if (!toRun.length) {
-        return cb();
+        return cb()
       }
       if (skipInstall()) {
-        log('Skipping install.', 'Run `' + gutil.colors.yellow(formatCommands(toRun)) + '` manually');
-        return cb();
+        log('Skipping install.', 'Run `' + gutil.colors.yellow(formatCommands(toRun)) + '` manually')
+        return cb()
       } else {
-        toRun.forEach(function(command) {
+        toRun.forEach(function (command) {
           limit(() => commandRunner.run(command))
             .then(() => done(cb, toRun.length))
             .catch(err => {
-              log(err.message, ', run `' + gutil.colors.yellow(formatCommand(command)) + '` manually');
-              return cb(err);
-            });
-        });
+              log(err.message, ', run `' + gutil.colors.yellow(formatCommand(command)) + '` manually')
+              return cb(err)
+            })
+        })
       }
     }
-  );
+  )
 
-  function done(cb, length) {
+  function done (cb, length) {
     if (++count === length) {
-      cb();
+      cb()
     }
   }
-};
+}
 
-function log() {
+function log () {
   if (isTest()) {
-    return;
+    return
   }
-  gutil.log.apply(gutil, [].slice.call(arguments));
+  gutil.log.apply(gutil, [].slice.call(arguments))
 }
 
-function formatCommands(cmds) {
-  return cmds.map(formatCommand).join(' && ');
+function formatCommands (cmds) {
+  return cmds.map(formatCommand).join(' && ')
 }
 
-function formatCommand(command) {
-  return command.cmd + ' ' + command.args.join(' ');
+function formatCommand (command) {
+  return command.cmd + ' ' + command.args.join(' ')
 }
 
-function formatArguments(args) {
+function formatArguments (args) {
   if (Array.isArray(args)) {
-    args.forEach(function(arg, index, arr) {
-      arr[index] = formatArgument(arg);
-    });
-    return args;
+    args.forEach(function (arg, index, arr) {
+      arr[index] = formatArgument(arg)
+    })
+    return args
   } else if (typeof args === 'string' || args instanceof String) {
-    return [ formatArgument(args) ];
+    return [ formatArgument(args) ]
   } else {
-    log('Arguments are not passed in a valid format: ' + args);
-    return [];
+    log('Arguments are not passed in a valid format: ' + args)
+    return []
   }
 }
 
-function formatArgument(arg) {
-  var result = arg;
+function formatArgument (arg) {
+  var result = arg
   while (!result.match(/--.*/)) {
-    result = '-' + result;
+    result = '-' + result
   }
-  return result;
+  return result
 }
 
-function skipInstall() {
-  return process.argv.slice(2).indexOf('--skip-install') >= 0;
+function skipInstall () {
+  return process.argv.slice(2).indexOf('--skip-install') >= 0
 }
 
-function isTest() {
-  return process.env.NODE_ENV === 'test';
+function isTest () {
+  return process.env.NODE_ENV === 'test'
 }
 
-function clone(obj) {
+function clone (obj) {
   if (Array.isArray(obj)) {
-    return obj.map(clone);
+    return obj.map(clone)
   } else if (typeof obj === 'object') {
-    var copy = {};
-    Object.keys(obj).forEach(function(key) {
-      copy[key] = clone(obj[key]);
-    });
-    return copy;
+    var copy = {}
+    Object.keys(obj).forEach(function (key) {
+      copy[key] = clone(obj[key])
+    })
+    return copy
   } else {
-    return obj;
+    return obj
   }
 }
